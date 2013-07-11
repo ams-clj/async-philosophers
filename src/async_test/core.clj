@@ -9,11 +9,10 @@
 
 ; fill the fork channels with forks
 (defn set-table []
-  (vec
-    (for [ch [(chan 1) (chan 1) (chan 1) (chan 1) (chan 1)]]
-      (do
-        (>!! ch :fork)
-        ch))))
+  (let [table [(chan 1) (chan 1) (chan 1) (chan 1) (chan 1)]]
+    (doseq [ch table]
+        (>!! ch :fork))
+    table))
 
 ; make a channel with philo-1 buffer
 ; so that 4 can put sit down before it blocks
@@ -44,8 +43,8 @@
 (def get-up <!!)
 
 ; zzzzzz
-;(defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
-(defn wait [])
+(defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
+;(defn wait [])
 
 (defn philo-forks [table philo]
   (map table (philo philosophers)))
