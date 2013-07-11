@@ -31,11 +31,12 @@
 
 ; just for debugging
 ; channels are flow, not state
-(def philostate (atom {:socrates   :thinking
-                       :plato      :thinking
-                       :hickey     :thinking
-                       :sussman    :thinking
-                       :stroustrup :thinking}))
+(def philostate (agent {:socrates   :thinking
+                        :plato      :thinking
+                        :hickey     :thinking
+                        :sussman    :thinking
+                        :stroustrup :thinking}))
+(add-watch philostate :debug #(println %4))
 
 ; get and return forks from a fork thread
 (def pickup <!!)
@@ -63,13 +64,11 @@
 
 (defn eat [table philo]
   (pickup-left table philo)
-  (swap! philostate assoc philo :left-fork)
-  (println @philostate)
+  (send philostate assoc philo :left-fork)
   (wait)
 
   (pickup-right table philo)
-  (swap! philostate assoc philo :eating)
-  (println @philostate)
+  (send philostate assoc philo :eating)
   (wait)
 
   (putdown-right table philo)
@@ -77,14 +76,12 @@
 
 (defn philosopher [table butler philo]
   (sit-down butler)
-  (swap! philostate assoc philo :sitting)
-  (println @philostate)
+  (send philostate assoc philo :sitting)
 
   (eat table philo)
 
   (get-up butler)
-  (swap! philostate assoc philo :thinking)
-  (println @philostate)
+  (send philostate assoc philo :thinking)
   
   (wait)
   (recur table butler philo))
