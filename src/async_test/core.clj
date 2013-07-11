@@ -7,11 +7,13 @@
                    :sussman    [3 4]
                    :stroustrup [4 0]})
 
+; fork is a thread that gives out a fork, waits for a fork and repeats.
 (defn fork [ch]
   (>!! ch :fork)
   (<!! ch)
   (recur ch))
 
+; start 5 fork threads
 (defn set-table []
   (vec
     (for [ch [(chan) (chan) (chan) (chan) (chan)]]
@@ -19,6 +21,8 @@
         (thread (fork ch))
         ch))))
 
+; make a channel with philo-1 buffer
+; so that 4 can put sit down before it blocks
 (defn make-butler []
   (chan (dec (count philosophers))))
 
@@ -33,12 +37,16 @@
                        :sussman    :thinking
                        :stroustrup :thinking}))
 
+; get and return forks from a fork thread
 (def pickup <!!)
 (def putdown #(>!! % :fork))
 
+; to sit down means to fill the buffer
+; to get up is to take out an item
 (def sit-down #(>!! % :sit))
 (def get-up <!!)
 
+; zzzzzz
 (defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
 
 (defn pickup-left [table philo]
@@ -68,8 +76,6 @@
   (putdown-left table philo))
 
 (defn philosopher [table butler philo]
-  (wait)
-
   (sit-down butler)
   (swap! philostate assoc philo :sitting)
   (println @philostate)
@@ -80,6 +86,7 @@
   (swap! philostate assoc philo :thinking)
   (println @philostate)
   
+  (wait)
   (recur table butler philo))
 
 (defn run []
