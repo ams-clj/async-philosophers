@@ -36,6 +36,8 @@
                         :hickey     :thinking
                         :sussman    :thinking
                         :stroustrup :thinking}))
+
+; print the forum when it changes
 (add-watch philostate :debug #(println %4))
 
 ; get and return forks from a fork thread
@@ -48,31 +50,22 @@
 (def get-up <!!)
 
 ; zzzzzz
-(defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
+;(defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
+(defn wait [])
 
-(defn pickup-left [table philo]
-  (pickup (table (first (philo philosophers)))))
-
-(defn pickup-right [table philo]
-  (pickup (table (second (philo philosophers)))))
-
-(defn putdown-left [table philo]
-  (putdown (table (first (philo philosophers)))))
-
-(defn putdown-right [table philo]
-  (putdown (table (second (philo philosophers)))))
+(defn philo-forks [table philo]
+  (map table (philo philosophers)))
 
 (defn eat [table philo]
-  (pickup-left table philo)
-  (send philostate assoc philo :left-fork)
-  (wait)
+  (let [fs (philo-forks table philo)]
+    (alts!! fs)
+    (send philostate assoc philo :one-fork)
 
-  (pickup-right table philo)
-  (send philostate assoc philo :eating)
-  (wait)
+    (alts!! fs)
+    (send philostate assoc philo :eating)
+    (wait)
 
-  (putdown-right table philo)
-  (putdown-left table philo))
+    (dorun (map putdown fs))))
 
 (defn philosopher [table butler philo]
   (sit-down butler)
