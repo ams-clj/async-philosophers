@@ -1,4 +1,4 @@
-# async-test - A Dining Philosophers solver
+# A Dining Philosophers solver
 
 The efforts of the [Amsterdam meetup](http://amsclj.nl) to learn how to use [`core.async`](https://github.com/clojure/core.async/) are gathered here.
 
@@ -10,6 +10,6 @@ Currently, we are still quite far away from having a working Dining Philosopher 
 
 ## License
 
-Copyright © 2013 Amsterdam Clojurians
+Copyright © 2013 [Amsterdam Clojurians](http://amsclj.nl)
 
 Distributed under the Eclipse Public License, the same as Clojure.
