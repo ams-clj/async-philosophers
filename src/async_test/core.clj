@@ -7,7 +7,7 @@
                    :sussman    [3 4]
                    :stroustrup [4 0]})
 
-; start 5 fork threads
+; fill the fork channels with forks
 (defn set-table []
   (vec
     (for [ch [(chan 1) (chan 1) (chan 1) (chan 1) (chan 1)]]
