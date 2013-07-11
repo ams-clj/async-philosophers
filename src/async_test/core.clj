@@ -7,18 +7,12 @@
                    :sussman    [3 4]
                    :stroustrup [4 0]})
 
-; fork is a thread that gives out a fork, waits for a fork and repeats.
-(defn fork [ch]
-  (>!! ch :fork)
-  (<!! ch)
-  (recur ch))
-
 ; start 5 fork threads
 (defn set-table []
   (vec
-    (for [ch [(chan) (chan) (chan) (chan) (chan)]]
+    (for [ch [(chan 1) (chan 1) (chan 1) (chan 1) (chan 1)]]
       (do
-        (thread (fork ch))
+        (>!! ch :fork)
         ch))))
 
 ; make a channel with philo-1 buffer
