@@ -19,59 +19,54 @@
 (defn make-butler []
   (chan (dec (count philosophers))))
 
-(def table (set-table))
-(def butler (make-butler))
-
-; just for debugging
-; channels are flow, not state
-(def philostate (agent {:socrates   :thinking
-                        :plato      :thinking
-                        :hickey     :thinking
-                        :sussman    :thinking
-                        :stroustrup :thinking}))
-
-; print the forum when it changes
-(add-watch philostate :debug #(println %4))
-
-; get and return forks from a fork thread
-(def pickup <!!)
-(def putdown #(>!! % :fork))
-
-; to sit down means to fill the buffer
-; to get up is to take out an item
-(def sit-down #(>!! % :sit))
-(def get-up <!!)
-
-; zzzzzz
-(defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
-;(defn wait [])
-
+; get the 2 forks fo a philosopher
 (defn philo-forks [table philo]
   (map table (philo philosophers)))
 
-(defn eat [table philo]
-  (let [fs (philo-forks table philo)]
-    (alts!! fs)
-    (send philostate assoc philo :one-fork)
+; just for debugging
+(defn philostate []
+  (let [updates (chan 10)
+        output (chan (sliding-buffer 10))]
+    (go (loop [state {:socrates   :thinking
+                      :plato      :thinking
+                      :hickey     :thinking
+                      :sussman    :thinking
+                      :stroustrup :thinking}]
+          (let [up (<! updates)
+                new-state (apply assoc state up)]
+            (>! output new-state)
+            (recur new-state))))
+    (go (while true
+      (println (frequencies (vals (<! output))))))
+    updates))
 
-    (alts!! fs)
-    (send philostate assoc philo :eating)
-    (wait)
+;(defn wait [] (Thread/sleep (+ 1000 (rand-int 5000))))
+(defn wait [])
 
-    (dorun (map putdown fs))))
+(defn philosopher [state table butler philo]
+  (go (while true
+    (let [fs (philo-forks table philo)]
+      (>! butler :sit)
+      (>! state [philo :sitting])
 
-(defn philosopher [table butler philo]
-  (sit-down butler)
-  (send philostate assoc philo :sitting)
+      (alts! fs)
+      (>! state [philo :one-fork])
 
-  (eat table philo)
+      (alts! fs)
+      (>! state [philo :eating])
+      (wait)
 
-  (get-up butler)
-  (send philostate assoc philo :thinking)
-  
-  (wait)
-  (recur table butler philo))
+      (doseq [f fs]
+        (>! f :fork))
+
+      (<! butler)
+      (>! state [philo :thinking])
+      
+      (wait)))))
 
 (defn run []
-  (doseq [p (keys philosophers)]
-    (thread (philosopher table butler p))))
+  (let [table (set-table)
+        butler (make-butler)
+        state (philostate)]
+    (doseq [p (keys philosophers)]
+      (philosopher state table butler p))))
